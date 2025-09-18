@@ -1,42 +1,37 @@
-package com.shiv.electronic.store.entities;
+package com.shiv.electronic.store.dto;
 
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import com.shiv.electronic.store.validation.ImageNameValid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 
 
 
-@Entity
-@Table(name = "users_tb")
-public class User {
-    @Id
+public class UserDto {
     private String userId;
 
-//    @Column(name = "user_name")
+    @Size(min = 3, max = 30)
     private String name;
 
-    @Column(unique = true)
+    @Pattern(regexp = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", message = "Invalid Email")
+    @NotBlank
     private String email;
 
-    @Column(length = 20)
+    @NotBlank
     private String password;
 
     private String gender;
 
-    @Column(length = 1000)
     private String about;
 
-//    @Column(name = "user_profile_name")
+//    @ImageNameValid(message = "Invalid name")
     private String userProfileName;
 
-
-    public User() {
+    public UserDto() {
     }
 
-    public User(String about, String email, String gender, String name, String password,  String userProfileName) {
+    public UserDto(String about, String email, String gender, String name, String password, String userProfileName) {
         this.about = about;
         this.email = email;
         this.gender = gender;
@@ -45,7 +40,6 @@ public class User {
 //        this.userId = userId;
         this.userProfileName = userProfileName;
     }
-
 
     public String getAbout() {
         return about;
