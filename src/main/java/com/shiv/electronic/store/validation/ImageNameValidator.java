@@ -14,7 +14,16 @@ public class ImageNameValidator implements ConstraintValidator<ImageNameValid, S
 
         logger.info("isValid called and value is : {}", s);
 
-        //Logic
-        return !(s.isBlank() || s==null);
+
+        //Write Your own Logic
+
+        //Get the Extension
+        String extension = s.substring(s.lastIndexOf("."));
+
+        //Set the Extension which we allowed
+        return extension.equalsIgnoreCase(".jpg")
+                || extension.equalsIgnoreCase(".png")
+                || extension.equalsIgnoreCase(".jpeg");
+
     }
 }

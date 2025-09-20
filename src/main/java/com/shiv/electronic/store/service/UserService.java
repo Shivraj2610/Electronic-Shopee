@@ -17,6 +17,9 @@ public interface UserService {
     //Delete User
     void deleteUser(String userEmail);
 
+    //Delete by Id
+    void deleteUserById(String userId);
+
     //Get All Users
     PageableResponse<UserDto> getAllUsers(int pageNumber, int pageSize, String sortBy, String sortDir);
 

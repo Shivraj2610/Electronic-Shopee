@@ -25,7 +25,7 @@ public class UserDto {
 
     private String about;
 
-//    @ImageNameValid(message = "Invalid name")
+    @ImageNameValid(message = "Invalid name")
     private String userProfileName;
 
     public UserDto() {

@@ -1,27 +1,49 @@
 package com.shiv.electronic.store.controllers;
 
 import com.shiv.electronic.store.custome.ApiResponseMessage;
+import com.shiv.electronic.store.custome.FileUploadedResponse;
 import com.shiv.electronic.store.custome.PageableResponse;
 import com.shiv.electronic.store.dto.UserDto;
+import com.shiv.electronic.store.service.FileService;
 import com.shiv.electronic.store.service.UserService;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import org.apache.coyote.Response;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.web.PagedModel;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
+import org.springframework.util.StreamUtils;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 
 @RestController
 @RequestMapping("/user")
 public class UserController {
 
+    private Logger logger = LoggerFactory.getLogger(UserController.class);
+
     @Autowired
     private UserService userService;
+
+
+    @Autowired
+    private FileService fileService;
+
+
+    @Value("${user.profile.image.path}")
+    private String fileUploadPath;
 
 
     //Create
@@ -94,5 +116,57 @@ public class UserController {
     public ResponseEntity<List<UserDto>> searchUsers(@RequestParam("keyword") String keyword){
         List<UserDto> userDtoList = userService.searchUser(keyword);
         return new ResponseEntity<>(userDtoList,HttpStatus.OK);
+    }
+
+
+    //Upload File
+    @PostMapping("/upload/file/{userId}")
+    public ResponseEntity<FileUploadedResponse> uploadFile(
+            @RequestParam("file")MultipartFile file,
+            @PathVariable String userId
+    ) throws IOException {
+
+        //Upload the File on Server folder
+        String fileNameWithExtension = fileService.uploadFile(file, fileUploadPath);
+
+        //Update the File Name in Database
+        UserDto userDto = userService.getUserById(userId);
+        userDto.setUserProfileName(fileNameWithExtension);
+        UserDto updatedUserDto = userService.updateUser(userDto, userDto.getEmail());
+
+
+
+        //Make the FileUploadedResponse
+        FileUploadedResponse fileUploadedSuccessfully = FileUploadedResponse.builder()
+                .fileName(fileNameWithExtension)
+                .message("File Uploaded Successfully")
+                .success(true)
+                .status(HttpStatus.CREATED)
+                .build();
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(fileUploadedSuccessfully);
+    }
+
+
+    //Serve the Uploaded File
+    @GetMapping("serve/file/{userId}")
+    public void serveFile(
+            @PathVariable String userId,
+            HttpServletResponse httpServletResponse
+    ) throws IOException {
+        UserDto userDto = userService.getUserById(userId);
+        String fileName = userDto.getUserProfileName();
+
+        logger.info("User's File Name is: "+fileName);
+
+        //In resource we get the InputStream means the Data of the File Now we want to store those data
+        InputStream resource = fileService.getResource(fileUploadPath, fileName);
+
+        //Set the Content Type
+        httpServletResponse.setContentType(MediaType.IMAGE_JPEG_VALUE);
+
+        //Now Copy the resource Data to httpServletResponse.getOutputStream()
+        StreamUtils.copy(resource,httpServletResponse.getOutputStream());
+
     }
 }

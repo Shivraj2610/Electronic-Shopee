@@ -1,8 +1,6 @@
 package com.shiv.electronic.store.helpers;
 
 import com.shiv.electronic.store.custome.PageableResponse;
-import com.shiv.electronic.store.dto.UserDto;
-import com.shiv.electronic.store.entities.User;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 

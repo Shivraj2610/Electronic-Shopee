@@ -8,18 +8,32 @@ import com.shiv.electronic.store.helpers.Helper;
 import com.shiv.electronic.store.repositories.UserRepository;
 import com.shiv.electronic.store.service.UserService;
 import org.modelmapper.ModelMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 @Service
 public class UserServiceImpl implements UserService {
+
+    Logger logger = LoggerFactory.getLogger(UserServiceImpl.class);
+
+    @Value("${user.profile.image.path}")
+    private String filePath;
 
     @Autowired
     private UserRepository userRepository;
@@ -77,6 +91,8 @@ public class UserServiceImpl implements UserService {
 
         UserDto updatedUserDto = entityToDto(savedUser);
 
+        logger.info("The updated User's Email is: "+email);
+
         return updatedUserDto;
     }
 
@@ -86,6 +102,41 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findByEmail(userEmail).orElseThrow(
                 ()->new ResourceNotFoundException("User Not found by Email: "+userEmail)
         );
+
+        String fullPath = filePath + File.separator + user.getUserProfileName();
+
+        //Delete the Image or File from Path
+        Path path = Paths.get(fullPath);
+
+        try {
+            Files.delete(path);
+
+        }catch (IOException e){
+            logger.info("User File or Image not Found");
+            throw new RuntimeException(e);
+        }
+
+        userRepository.delete(user);
+    }
+
+    @Override
+    public void deleteUserById(String userId){
+        User user = userRepository.findById(userId)
+                .orElseThrow(
+                        () -> new ResourceNotFoundException("User Not found by Id: " + userId)
+                );
+
+        //FullPath of the Image or File
+        String fullPath = filePath + File.separator + user.getUserProfileName();
+
+        //Delete the file or image from server folder
+        Path path = Paths.get(fullPath);
+        try {
+            Files.delete(path);
+        }catch (IOException e){
+            logger.info("User Image or File is not Found");
+            throw new RuntimeException(e);
+        }
 
         userRepository.delete(user);
     }
